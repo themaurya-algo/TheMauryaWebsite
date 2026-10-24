@@ -24,6 +24,9 @@
 @media(max-width:520px){.news-card{padding-left:52px}.shell{width:calc(100% - 30px)}.brand{font-size:17px}.brand img{width:35px;height:39px}h1{font-size:43px;letter-spacing:-2px}.ticker-grid,.strategy-grid{grid-template-columns:1fr}.hero-art{min-height:300px}.terminal{padding:12px}.terminal-top{font-size:9px}.terminal-cells b{font-size:8px}.terminal-cells span{font-size:8px}.floating-tag{font-size:8px;padding:7px}.market-head{align-items:flex-start;flex-direction:column}.market-controls{justify-content:flex-start}.steps{gap:22px 12px}.final-cta{padding:24px}.cta-orb{font-size:65px}.risk-grid{gap:15px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition:none!important}}
 </style>
+<style>
+.news-card details{height:100%}.news-card summary{position:relative;display:block;cursor:pointer;list-style:none;padding-right:24px}.news-card summary::-webkit-details-marker{display:none}.news-card summary:after{content:"+";position:absolute;right:0;top:-3px;color:#76e6f6;font-size:22px;font-weight:500}.news-card details[open] summary:after{content:"−"}.news-card details[open] summary h3{color:#86edfa}.news-summary-body{border-top:1px solid #6f8db133;margin-top:12px;padding-top:13px}.news-summary-body p{margin:0 0 13px;color:#bdcbe0;font-size:13px;line-height:1.65}.news-card .news-read-more{display:inline-flex;color:#7ee8f7;font-size:12px;font-weight:800;letter-spacing:.02em}.news-card .news-read-more:hover{color:#fff}
+</style>
   
 </head>
 <body>
@@ -300,7 +303,7 @@
   const status = document.getElementById("news-status");
   const dot = document.getElementById("news-dot");
   if (!list || !status || !dot) return;
-  const endpoint = "https://app.traderthemaurya.com/public/news?v=48h-upcoming-20261024";
+  const endpoint = "https://app.traderthemaurya.com/public/news?v=expand-summary-20261024";
   const allowedHosts = new Set(["federalreserve.gov","www.federalreserve.gov","whitehouse.gov","www.whitehouse.gov","rbi.org.in","www.rbi.org.in","ecb.europa.eu","www.ecb.europa.eu","mid.ecb.europa.eu","bls.gov","www.bls.gov","bea.gov","www.bea.gov"]);
   const dateFormat = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});
   function safeUrl(value) {
@@ -316,13 +319,17 @@
       const eventDate = new Date(isUpcoming ? item.scheduled_at : item.published_at);
       if (!href || !item.title || !item.source || Number.isNaN(eventDate.getTime())) continue;
       const li = document.createElement("li"); li.className = "news-card" + (isUpcoming ? " news-upcoming" : "");
-      const link = document.createElement("a"); link.href = href; link.target = "_blank"; link.rel = "noopener noreferrer";
+      const details = document.createElement("details");
+      const toggle = document.createElement("summary");
       const meta = document.createElement("div"); meta.className = "news-meta";
       const source = document.createElement("span"); source.className = "news-source"; source.textContent = item.source;
       const category = document.createElement("span"); category.className = "news-category"; category.textContent = (isUpcoming ? "UPCOMING · " : "LATEST · ") + (item.category || "Market update");
       const time = document.createElement("time"); time.dateTime = isUpcoming ? item.scheduled_at : item.published_at; time.textContent = dateFormat.format(eventDate);
-      const title = document.createElement("h3"); title.textContent = item.title + " ↗";
-      meta.append(source, category, time); link.append(meta, title); li.append(link); fragment.append(li);
+      const title = document.createElement("h3"); title.textContent = item.title;
+      const body = document.createElement("div"); body.className = "news-summary-body";
+      const summary = document.createElement("p"); summary.textContent = item.summary || (isUpcoming ? "This official event is scheduled; its result is not available yet." : "Open the official source for the complete update.");
+      const link = document.createElement("a"); link.className = "news-read-more"; link.href = href; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = "Read full official source ↗";
+      meta.append(source, category, time); toggle.append(meta, title); body.append(summary, link); details.append(toggle, body); li.append(details); fragment.append(li);
     }
     if (!fragment.childNodes.length) throw new Error("No valid official headlines");
     list.replaceChildren(fragment);
