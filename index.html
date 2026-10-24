@@ -300,7 +300,7 @@
   const status = document.getElementById("news-status");
   const dot = document.getElementById("news-dot");
   if (!list || !status || !dot) return;
-  const endpoint = "https://app.traderthemaurya.com/public/news";
+  const endpoint = "https://app.traderthemaurya.com/public/news?v=48h-upcoming-20261024";
   const allowedHosts = new Set(["federalreserve.gov","www.federalreserve.gov","whitehouse.gov","www.whitehouse.gov","rbi.org.in","www.rbi.org.in","ecb.europa.eu","www.ecb.europa.eu","mid.ecb.europa.eu","bls.gov","www.bls.gov","bea.gov","www.bea.gov"]);
   const dateFormat = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});
   function safeUrl(value) {
