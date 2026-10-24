@@ -84,9 +84,9 @@
  </section>
  <section class="section news-section" id="news" aria-labelledby="news-title">
   <div class="shell">
-   <div class="news-heading"><div><p class="eyebrow section-eye">01 / MARKET INTELLIGENCE</p><h2 id="news-title">Global market briefing.<br><span class="shimmer">10 market updates worth tracking.</span></h2><p class="section-sub">Official updates on central-bank policy, U.S. presidential actions, liquidity, trade and financial markets.</p></div><div class="news-health"><span class="status-dot" id="news-dot"></span><span id="news-status" role="status">Loading official headlines…</span></div></div>
+   <div class="news-heading"><div><p class="eyebrow section-eye">01 / MARKET INTELLIGENCE</p><h2 id="news-title">Crypto volatility watch.<br><span class="shimmer">Recent news and what comes next.</span></h2><p class="section-sub">Market-moving official updates from the last 48 hours, followed by upcoming central-bank and economic events.</p></div><div class="news-health"><span class="status-dot" id="news-dot"></span><span id="news-status" role="status">Loading volatility watch…</span></div></div>
    <ol class="news-list" id="news-list" aria-live="polite"><li class="news-card news-loading"><div class="news-meta"><span class="news-source">OFFICIAL SOURCE</span></div><h3 aria-hidden="true"></h3></li><li class="news-card news-loading"><div class="news-meta"><span class="news-source">OFFICIAL SOURCE</span></div><h3 aria-hidden="true"></h3></li><li class="news-card news-loading"><div class="news-meta"><span class="news-source">OFFICIAL SOURCE</span></div><h3 aria-hidden="true"></h3></li><li class="news-card news-loading"><div class="news-meta"><span class="news-source">OFFICIAL SOURCE</span></div><h3 aria-hidden="true"></h3></li></ol>
-   <p class="news-note">Headlines are selected from official publisher feeds using market-related keywords and recency. TheMaurya does not rewrite their meaning. Open a headline to read the original release. For information only; not financial advice.</p>
+   <p class="news-note">Past headlines are limited to 48 hours. Upcoming cards are scheduled events from official calendars, not predictions. TheMaurya does not rewrite their meaning. For information only; not financial advice.</p>
   </div>
  </section>
  <section class="section shell" id="strategies">
@@ -301,7 +301,7 @@
   const dot = document.getElementById("news-dot");
   if (!list || !status || !dot) return;
   const endpoint = "https://app.traderthemaurya.com/public/news";
-  const allowedHosts = new Set(["federalreserve.gov","www.federalreserve.gov","whitehouse.gov","www.whitehouse.gov","rbi.org.in","www.rbi.org.in","ecb.europa.eu","www.ecb.europa.eu","mid.ecb.europa.eu"]);
+  const allowedHosts = new Set(["federalreserve.gov","www.federalreserve.gov","whitehouse.gov","www.whitehouse.gov","rbi.org.in","www.rbi.org.in","ecb.europa.eu","www.ecb.europa.eu","mid.ecb.europa.eu","bls.gov","www.bls.gov","bea.gov","www.bea.gov"]);
   const dateFormat = new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});
   function safeUrl(value) {
     try { const url = new URL(value); return url.protocol === "https:" && allowedHosts.has(url.hostname) ? url.href : ""; }
@@ -312,14 +312,15 @@
     const fragment = document.createDocumentFragment();
     for (const item of items) {
       const href = safeUrl(item.url);
-      const published = new Date(item.published_at);
-      if (!href || !item.title || !item.source || Number.isNaN(published.getTime())) continue;
-      const li = document.createElement("li"); li.className = "news-card";
+      const isUpcoming = item.event_type === "upcoming";
+      const eventDate = new Date(isUpcoming ? item.scheduled_at : item.published_at);
+      if (!href || !item.title || !item.source || Number.isNaN(eventDate.getTime())) continue;
+      const li = document.createElement("li"); li.className = "news-card" + (isUpcoming ? " news-upcoming" : "");
       const link = document.createElement("a"); link.href = href; link.target = "_blank"; link.rel = "noopener noreferrer";
       const meta = document.createElement("div"); meta.className = "news-meta";
       const source = document.createElement("span"); source.className = "news-source"; source.textContent = item.source;
-      const category = document.createElement("span"); category.className = "news-category"; category.textContent = item.category || "Market update";
-      const time = document.createElement("time"); time.dateTime = item.published_at; time.textContent = dateFormat.format(published);
+      const category = document.createElement("span"); category.className = "news-category"; category.textContent = (isUpcoming ? "UPCOMING · " : "LATEST · ") + (item.category || "Market update");
+      const time = document.createElement("time"); time.dateTime = isUpcoming ? item.scheduled_at : item.published_at; time.textContent = dateFormat.format(eventDate);
       const title = document.createElement("h3"); title.textContent = item.title + " ↗";
       meta.append(source, category, time); link.append(meta, title); li.append(link); fragment.append(li);
     }
@@ -327,9 +328,11 @@
     list.replaceChildren(fragment);
     const updated = new Date(payload.updated_at);
     const label = Number.isNaN(updated.getTime()) ? "updated recently" : "updated " + dateFormat.format(updated);
-    status.textContent = list.children.length + " official headlines · " + label;
-    dot.classList.toggle("live", list.children.length === 10);
-    dot.classList.toggle("stale", list.children.length < 10);
+    const latestCount = Number(payload.latest_count) || 0;
+    const upcomingCount = Number(payload.upcoming_count) || 0;
+    status.textContent = latestCount + " latest · " + upcomingCount + " upcoming · " + label;
+    dot.classList.toggle("live", list.children.length > 0);
+    dot.classList.toggle("stale", list.children.length === 0);
   }
   async function load() {
     try {
